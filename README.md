@@ -1,3 +1,11 @@
 # Cymatic Sorting
 
-![](sand.mp4)
+## Requirements
+
+`pip install -r requirements.txt`
+
+## Usage
+
+`python main.py`
+
+![sand.mp4](sand.mp4)
