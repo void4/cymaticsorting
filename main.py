@@ -55,20 +55,23 @@ RANDOM_AMPLITUDE = 0.05
 
 
 class Sand:
-    def __init__(self, N_points, amplitude, delta=0.05):
+    def __init__(self, N_points, amplitude, colordict, delta=0.05):
         self.N_points = N_points
         self.pointgroups = {}
-        for g in [-1, 1]:
+        for g in colordict.keys():
             self.pointgroups[g] = np.random.uniform(-1, 1, size=(2,self.N_points))
         self.prev_points = {}
         self.amplitude = amplitude
         self.delta = delta
 
+    def randomangles(self):
+        angles = np.random.uniform(0, 2 * np.pi, size=self.N_points)
+        dr = self.delta * np.array([np.cos(angles), np.sin(angles)])
+        return dr
+
     def moverandom(self):
         for colorindex, points in self.pointgroups.items():
-            angles = np.random.uniform(0, 2 * np.pi,
-                                       size=self.N_points)  # assuming they move randomly, so this will only work with _many_ particles or over long time frames?
-            dr = self.delta * np.array([np.cos(angles), np.sin(angles)])# \
+            dr = self.randomangles()# \
                  #* self.amplitude(points[0], points[1], n, m) / 2
                 # well, will still have an amplitude distribution of some sort, but maybe we can omit that here
 
@@ -81,7 +84,7 @@ class Sand:
             paramstats = Counter()
             # pairs = [(3,5), (5,3)]
             pairs = []
-            P = 13
+            P = 7
             for n in range(3,3*P+1,2):
                 for m in range(3,3*P+1,2):
                     if n != m:
@@ -90,9 +93,9 @@ class Sand:
             for n, m in pairs:
                 paramstats[(n,m)] = 0
                 for colorindex, points in self.pointgroups.items():
-                    angles = np.random.uniform(0, 2*np.pi, size=self.N_points)#assuming they move randomly, so this will only work with _many_ particles or over long time frames?
-                    dr = self.delta * np.array([np.cos(angles), np.sin(angles)]) \
-                          * self.amplitude(points[0], points[1], n, m) / 2
+                    #assuming they move randomly, so this will only work with _many_ particles or over long time frames?
+                    dr = self.randomangles()
+                    dr *= self.amplitude(points[0], points[1], n, m) / 2
                     newpos = points + dr
                     newpos = np.clip(newpos, -CLIP, CLIP)
                     paramstats[(n,m)] += colorindex*np.average(newpos[0]) #assuming colorindex in {-1,1}, separate by x-position
@@ -104,9 +107,8 @@ class Sand:
             bestn, bestm = n, m
 
         for colorindex, points in self.pointgroups.items():
-            angles = np.random.uniform(0, 2 * np.pi, size=self.N_points)
-            dr = self.delta * np.array([np.cos(angles), np.sin(angles)]) \
-                 * self.amplitude(points[0], points[1], bestn, bestm) / 2
+            dr = self.randomangles()
+            dr *= self.amplitude(points[0], points[1], bestn, bestm) / 2
             self.prev_points[colorindex] = np.copy(points)
             self.pointgroups[colorindex] += dr
             self.pointgroups[colorindex] = np.clip(self.pointgroups[colorindex], -CLIP, CLIP)
@@ -121,7 +123,7 @@ SPLITAT = 250
 
 NUMPARTICLES = 50
 NUMFRAMES = 1000
-ensemble = Sand(NUMPARTICLES, amplitude, delta=0.075)
+ensemble = Sand(NUMPARTICLES, amplitude, colordict, delta=0.075)
 
 for colorindex, points in ensemble.pointgroups.items():
     plt.plot(*points, marker='o', ms=2, color=colordict[colorindex])
